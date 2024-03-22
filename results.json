@@ -11,6 +11,18 @@
         "R13yAtBuildTime": "false",
         "R13yAtRuntime": "false"
       }
+    ],
+    "scenario-2": [
+      {
+        "workflow": 53,
+        "datetime": 1711119587.276822,
+        "checksum1": "sha256-amtq1wBY4uTNQYKRcP9L2lD3kauO2uX4y7tSss7n6vk=",
+        "checksum2": "sha256-8jr0hofquU7cJhuAe5+6KxyLS0HfaKFPgNMoh+dkBbs=",
+        "output1": "Built the Mar 22 2024 at 14:59:40.",
+        "output2": "Built the Mar 22 2024 at 14:59:40.",
+        "R13yAtBuildTime": "false",
+        "R13yAtRuntime": "true"
+      }
     ]
   }
 }
