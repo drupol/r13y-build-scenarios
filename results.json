@@ -275,6 +275,18 @@
         "R13yAtBuildTime": "false",
         "R13yAtRuntime": "false"
       }
+    ],
+    "scenario-5": [
+      {
+        "workflow": 55,
+        "datetime": 1711122697.302286,
+        "checksum1": "sha256-oQpSCrNwgzHXowjj3RF7g1jVfwTWVmP5IA0G79q+jLw=",
+        "checksum2": "sha256-oQpSCrNwgzHXowjj3RF7g1jVfwTWVmP5IA0G79q+jLw=",
+        "output1": "Built the Jan  1 1980 at 00:00:00.",
+        "output2": "Built the Jan  1 1980 at 00:00:00.",
+        "R13yAtBuildTime": "true",
+        "R13yAtRuntime": "true"
+      }
     ]
   },
   "aarch64-darwin": {
