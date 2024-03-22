@@ -83,6 +83,18 @@
         "R13yAtBuildTime": "true",
         "R13yAtRuntime": "true"
       }
+    ],
+    "scenario-3": [
+      {
+        "workflow": 53,
+        "datetime": 1711120498.058819,
+        "checksum1": "sha256-k+iiXG5HIIjgzo5aD2FggjdybL633Tc7OPJGDhGrhUE=",
+        "checksum2": "sha256-k+iiXG5HIIjgzo5aD2FggjdybL633Tc7OPJGDhGrhUE=",
+        "output1": "Built the Jan  1 1970 at 00:00:01.",
+        "output2": "Built the Jan  1 1970 at 00:00:01.",
+        "R13yAtBuildTime": "true",
+        "R13yAtRuntime": "true"
+      }
     ]
   },
   "x86_64-darwin": {
