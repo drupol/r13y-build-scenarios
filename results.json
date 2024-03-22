@@ -121,6 +121,18 @@
         "R13yAtBuildTime": "false",
         "R13yAtRuntime": "false"
       }
+    ],
+    "scenario-7": [
+      {
+        "workflow": 53,
+        "datetime": 1711120140.94222,
+        "checksum1": "sha256-VhBdfrvQ4bmoB4ZADlBJcEzYvn+sCdnLxmwmmJv0knY=",
+        "checksum2": "sha256-cz50o98RaAuRl7vz2IGwaMtUe/f5+IhfLFXk3qb5sY0=",
+        "output1": "sha256-VhBdfrvQ4bmoB4ZADlBJcEzYvn+sCdnLxmwmmJv0knY=",
+        "output2": "sha256-cz50o98RaAuRl7vz2IGwaMtUe/f5+IhfLFXk3qb5sY0=",
+        "R13yAtBuildTime": "false",
+        "R13yAtRuntime": "false"
+      }
     ]
   },
   "aarch64-darwin": {
