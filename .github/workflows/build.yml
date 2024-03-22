@@ -1,0 +1,168 @@
+name: Build Scenarios
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - "*"
+
+concurrency:
+    group: ${{ github.workflow }}
+    cancel-in-progress: true
+
+jobs:
+    build:
+        name: "${{ matrix.projects.scenario }} on ${{ matrix.archs.arch }}/${{ matrix.archs.os }}"
+        runs-on: ${{ matrix.archs.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                archs:
+                    [
+                        { os: ubuntu-22.04, arch: x86_64-linux },
+                        { os: ubuntu-20.04, arch: x86_64-linux },
+                        { os: macos-12, arch: x86_64-darwin },
+                        { os: macos-14, arch: aarch64-darwin },
+                    ]
+                projects:
+                    [
+                        { scenario: scenario-1, docker: false, guix: false },
+                        { scenario: scenario-2, docker: true, guix: false },
+                        { scenario: scenario-3, docker: false, guix: true },
+                        { scenario: scenario-4, docker: false, guix: false },
+                        { scenario: scenario-5, docker: false, guix: false },
+                        { scenario: scenario-6, docker: false, guix: false },
+                        { scenario: scenario-7, docker: true, guix: false },
+                        { scenario: scenario-8, docker: false, guix: false },
+                        { scenario: scenario-9, docker: false, guix: false },
+                    ]
+                exclude:
+                    - archs: { os: macos-12, arch: x86_64-darwin }
+                      projects:
+                          { scenario: scenario-2, docker: true, guix: false }
+                    - archs: { os: macos-12, arch: x86_64-darwin }
+                      projects:
+                          { scenario: scenario-3, docker: false, guix: true }
+                    - archs: { os: macos-12, arch: x86_64-darwin }
+                      projects:
+                          { scenario: scenario-6, docker: false, guix: false }
+                    - archs: { os: macos-12, arch: x86_64-darwin }
+                      projects:
+                          { scenario: scenario-7, docker: true, guix: false }
+                    - archs: { os: macos-14, arch: aarch64-darwin }
+                      projects:
+                          { scenario: scenario-2, docker: true, guix: false }
+                    - archs: { os: macos-14, arch: aarch64-darwin }
+                      projects:
+                          { scenario: scenario-3, docker: false, guix: true }
+                    - archs: { os: macos-14, arch: aarch64-darwin }
+                      projects:
+                          { scenario: scenario-6, docker: false, guix: false }
+                    - archs: { os: macos-14, arch: aarch64-darwin }
+                      projects:
+                          { scenario: scenario-7, docker: true, guix: false }
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              if: matrix.projects.docker
+              continue-on-error: true
+              uses: docker/setup-buildx-action@v3
+
+            - name: Install Nix
+              uses: DeterminateSystems/nix-installer-action@v10
+
+            - name: Install Guix
+              if: matrix.projects.guix
+              continue-on-error: true
+              run: |
+                  wget https://git.savannah.gnu.org/cgit/guix.git/plain/etc/guix-install.sh
+                  chmod +x guix-install.sh
+                  yes | sudo ./guix-install.sh
+
+            - name: Prepare directories
+              run: |
+                  cp -r lib/${{ matrix.projects.scenario }} build1
+                  cp -r lib/${{ matrix.projects.scenario }} build2
+                  git add .
+
+            - name: Build (first pass)
+              id: build_build1
+              working-directory: build1
+              run: |
+                  make build
+
+            - name: Check (first pass)
+              id: check_build1
+              working-directory: build1
+              run: |
+                  echo "CHECK_BUILD1=$(make -s check)" >> "$GITHUB_ENV"
+
+            - name: Run (first pass)
+              id: run_build1
+              working-directory: build1
+              run: |
+                  echo "RUN_BUILD1=$(make -s run)" >> "$GITHUB_ENV"
+
+            - name: Moving in time...(5sec)
+              continue-on-error: true
+              run: |
+                  sudo rm -rf build1
+                  sleep 5
+
+            - name: Build (second pass)
+              id: build_build2
+              working-directory: build2
+              run: |
+                  make build
+
+            - name: Check (second pass)
+              id: check_build2
+              working-directory: build2
+              run: |
+                  echo "CHECK_BUILD2=$(make -s check)" >> "$GITHUB_ENV"
+
+            - name: Run (second pass)
+              id: run_build2
+              working-directory: build2
+              run: |
+                  echo "RUN_BUILD2=$(make -s run)" >> "$GITHUB_ENV"
+
+            - name: Summary
+              run: |
+                  echo "Checksum build1: ${{ env.CHECK_BUILD1 }}"
+                  echo "Checksum build2: ${{ env.CHECK_BUILD2 }}"
+                  echo "Output build1: ${{ env.RUN_BUILD1 }}"
+                  echo "Output build2: ${{ env.RUN_BUILD2 }}"
+                  if [ "${{ env.CHECK_BUILD1 }}" == "${{ env.CHECK_BUILD2 }}" ]; then echo "Reproducible at build-time"; else echo "Not reproducible at build-time"; fi
+                  if [ "${{ env.RUN_BUILD1 }}" == "${{ env.RUN_BUILD2 }}" ]; then echo "Reproducible at run-time"; else echo "Not reproducible at run-time"; fi
+                  echo "R13Y_AT_BUILDTIME=$(if [ "${{ env.CHECK_BUILD1 }}" == "${{ env.CHECK_BUILD2 }}" ]; then echo "true"; else echo "false"; fi)" >> $GITHUB_ENV
+                  echo "R13Y_AT_RUNTIME=$(if [ "${{ env.RUN_BUILD1 }}" == "${{ env.RUN_BUILD2 }}" ]; then echo "true"; else echo "false"; fi)" >> $GITHUB_ENV
+
+            - name: Cleaning leftovers
+              continue-on-error: true
+              run: |
+                  sudo rm -rf build2
+                  git clean -fdx
+
+            - name: Checkout results
+              uses: actions/checkout@v4
+              with:
+                  ref: results
+
+            - name: Consolidation results
+              continue-on-error: true
+              run: |
+                  jq '. += {"${{ matrix.projects.scenario }}": []}' results.json > results.json.1
+                  jq '."${{ matrix.archs.arch }}"."${{ matrix.projects.scenario }}" += [ { "workflow":${{github.run_number}}, "datetime":(now), "checksum1":"${{ env.CHECK_BUILD1 }}", "checksum2":"${{ env.CHECK_BUILD2 }}", "output1":"${{ env.RUN_BUILD1 }}", "output2":"${{ env.RUN_BUILD2 }}", "R13yAtBuildTime":"${{ env.R13Y_AT_BUILDTIME }}", "R13yAtRuntime":"${{ env.R13Y_AT_RUNTIME }}" } ]' results.json > results.json.2
+                  cp results.json.2 results.json
+                  rm -rf results.json.1 results.json.2
+
+            - name: Update results
+              uses: stefanzweifel/git-auto-commit-action@v5
+              continue-on-error: true
+              with:
+                  commit_message: Update results
+                  branch: results
+                  file_pattern: "*.json"
