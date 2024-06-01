@@ -71,7 +71,7 @@ jobs:
               uses: docker/setup-buildx-action@v3
 
             - name: Install Nix
-              uses: DeterminateSystems/nix-installer-action@v10
+              uses: DeterminateSystems/nix-installer-action@v11
 
             - name: Install Guix
               if: matrix.projects.guix
